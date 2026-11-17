@@ -1,0 +1,219 @@
+createOrReplace
+
+	table _Medidas
+		lineageTag: 1a086f52-924c-4c40-87b1-26946ee4da66
+
+		measure 'Gasto Cohorte Publicacion' = SUM ('dw fact_proceso'[monto_adjudicado_pen])
+			formatString: "S/"\ #,0.0;-"S/"\ #,0.0;"S/"\ #,0.0
+			lineageTag: 2ee36a0e-014a-4ccd-9957-00e40ad1cf38
+
+			annotation PBI_FormatHint = {"currencyCulture":"es-PE"}
+
+		measure Procesos = COUNTROWS ('dw fact_proceso')
+			formatString: #,0
+			lineageTag: 4dc58098-0ee9-4de9-b9a4-c842952e03a3
+
+		measure 'Procesos Adjudicados' = CALCULATE ([Procesos], 'dw fact_proceso'[tiene_adjudicacion] = TRUE ())
+			formatString: 0
+			lineageTag: ea7ce00a-c9f7-47af-9c48-3289efd76522
+
+		measure '% Adjudicados' = DIVIDE ([Procesos Adjudicados], [Procesos])
+			formatString: 0.0\ %;-0.0\ %;0.0\ %
+			lineageTag: 4b6205ff-0a21-45b7-aae5-56460248e3bd
+
+		measure 'Ahorro vs Referencial %' =
+				
+				VAR ref =
+				    CALCULATE (
+				        SUM ('dw fact_proceso'[monto_referencial_pen]),
+				        'dw fact_proceso'[tiene_adjudicacion] = TRUE (),
+				        'dw fact_proceso'[monto_referencial_pen] > 0,
+				        'dw fact_proceso'[monto_adjudicado_pen] > 0
+				    )
+				VAR adj =
+				    CALCULATE (
+				        SUM ('dw fact_proceso'[monto_adjudicado_pen]),
+				        'dw fact_proceso'[tiene_adjudicacion] = TRUE (),
+				        'dw fact_proceso'[monto_referencial_pen] > 0,
+				        'dw fact_proceso'[monto_adjudicado_pen] > 0
+				    )
+				RETURN
+				    DIVIDE ( ref - adj, ref )
+			formatString: 0.0\ %;-0.0\ %;0.0\ %
+			lineageTag: e3624c7c-5c93-4b06-ab51-4bb1f55a09b0
+
+		measure 'Gasto Ene-Jun' =
+				
+				CALCULATE ([Gasto Cohorte Publicacion],'dw dim_fecha'[mes] <= 6)
+			formatString: "S/"\ #,0.00;-"S/"\ #,0.00;"S/"\ #,0.00
+			lineageTag: 5abbe2b5-013d-418f-8837-1cecafe09e83
+
+			annotation PBI_FormatHint = {"currencyCulture":"es-PE"}
+
+		measure 'Procesos Competitivos' =
+				
+				CALCULATE ( [Procesos], 'dw fact_proceso'[Es Competitivo] = TRUE () )
+			formatString: 0
+			lineageTag: 589cd326-3c0e-4108-a1ff-2016a73625f1
+
+		measure '% Un Solo Postor' =
+				
+				DIVIDE (
+				    CALCULATE ( [Procesos Competitivos], 'dw fact_proceso'[un_solo_postor] = TRUE () ),
+				    [Procesos Competitivos]
+				)
+			formatString: 0.0\ %;-0.0\ %;0.0\ %
+			lineageTag: e4022594-beaf-4a0c-96f3-7d19f291c2cb
+
+		measure 'Entidades Compradoras' = DISTINCTCOUNT ( 'dw fact_proceso'[entidad_id] )
+			formatString: #,0
+			lineageTag: e910772a-f455-4dfd-8985-7e0db222d835
+
+		measure 'Gasto Promedio por Adjudicado' =
+				
+				DIVIDE ( [Gasto Cohorte Publicacion], [Procesos Adjudicados] )
+			formatString: "S/"\ #,0.0;-"S/"\ #,0.0;"S/"\ #,0.0
+			lineageTag: c11c088e-0f9f-4620-ad0d-5176a0fd898f
+
+			annotation PBI_FormatHint = {"currencyCulture":"es-PE"}
+
+		measure 'Concentración Top 10 Entidades' =
+				
+				VAR top10 =
+				    TOPN ( 10, ALLSELECTED ( 'dw dim_entidad'[nombre] ), [Gasto Cohorte Publicacion] )
+				RETURN
+				    DIVIDE (
+				        CALCULATE ( [Gasto Cohorte Publicacion], KEEPFILTERS ( top10 ) ),
+				        CALCULATE ( [Gasto Cohorte Publicacion], ALLSELECTED ( 'dw dim_entidad' ) )
+				    )
+			formatString: 0.0\ %;-0.0\ %;0.0\ %
+			lineageTag: 83f908da-91f0-4fd5-b592-f060884677f5
+
+		measure '% Gasto en Lima' =
+				
+				DIVIDE (
+				    COALESCE (
+				        CALCULATE ( [Gasto Cohorte Publicacion], 'dw dim_entidad'[departamento] = "LIMA" ),
+				        0
+				    ),
+				    CALCULATE ( [Gasto Cohorte Publicacion], REMOVEFILTERS ( 'dw dim_entidad'[departamento] ) )
+				)
+			formatString: 0.0\ %;-0.0\ %;0.0\ %
+			lineageTag: 7ada7ec8-ceb3-42db-bf2a-375c4ac68f49
+
+		measure 'Gasto Adjudicado' = SUM ( 'dw fact_adjudicacion'[monto_pen] )
+			formatString: "S/"\ #,0.00;-"S/"\ #,0.00;"S/"\ #,0.00
+			lineageTag: 15d00cc7-2795-455c-9965-65198180fc4b
+
+			annotation PBI_FormatHint = {"currencyCulture":"es-PE"}
+
+		measure Adjudicaciones = COUNTROWS ( 'dw fact_adjudicacion' )
+			formatString: #,0
+			lineageTag: ba2ec923-e78e-414d-90ba-213d3e4cb79a
+
+		measure 'Proveedores Adjudicados' = DISTINCTCOUNT ( 'dw fact_adjudicacion'[proveedor_id] )
+			formatString: #,0
+			lineageTag: 52370c71-e8ba-4027-90ba-44a36b9ec95c
+
+		measure 'Gasto Promedio por Proveedor' =
+				
+				DIVIDE ( [Gasto Adjudicado], [Proveedores Adjudicados] )
+			formatString: "S/"\ #,0.0;-"S/"\ #,0.0;"S/"\ #,0.0
+			lineageTag: 02448f94-db54-4f1e-b8d4-817aa692e364
+
+			annotation PBI_FormatHint = {"currencyCulture":"es-PE"}
+
+		measure 'Participación Top 10 Proveedores' =
+				
+				VAR reales =
+				    CALCULATETABLE (
+				        VALUES ( 'dw dim_proveedor'[proveedor_id] ),
+				        ALLSELECTED ( 'dw dim_proveedor' ),
+				        'dw dim_proveedor'[Es RUC Genérico] = FALSE ()
+				    )
+				VAR top10 = TOPN ( 10, reales, [Gasto Adjudicado] )
+				RETURN
+				    DIVIDE (
+				        CALCULATE ( [Gasto Adjudicado], KEEPFILTERS ( top10 ) ),
+				        CALCULATE ( [Gasto Adjudicado], ALLSELECTED ( 'dw dim_proveedor' ) )
+				    )
+			formatString: 0.0\ %;-0.0\ %;0.0\ %
+			lineageTag: fba05dd3-de03-4873-9c3b-851122ce5699
+
+		measure 'Participación Proveedor Líder' =
+				
+				VAR reales =
+				    CALCULATETABLE (
+				        VALUES ( 'dw dim_proveedor'[proveedor_id] ),
+				        ALLSELECTED ( 'dw dim_proveedor' ),
+				        'dw dim_proveedor'[Es RUC Genérico] = FALSE ()
+				    )
+				RETURN
+				    DIVIDE (
+				        MAXX ( reales, [Gasto Adjudicado] ),
+				        CALCULATE ( [Gasto Adjudicado], ALLSELECTED ( 'dw dim_proveedor' ) )
+				    )
+			formatString: 0.0\ %;-0.0\ %;0.0\ %
+			lineageTag: 63e55726-e0e8-44a4-b6fa-f984d06f69ee
+
+		measure 'Postores Promedio' =
+				
+				CALCULATE (
+				    AVERAGE ( 'dw fact_proceso'[n_postores] ),
+				    'dw fact_proceso'[Es Competitivo] = TRUE (),
+				    'dw fact_proceso'[n_postores] > 0
+				)
+			lineageTag: 16f00a96-550d-46eb-bf73-1d6f73049e15
+
+			annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+		measure '% Desiertos' =
+				
+				DIVIDE (
+				    CALCULATE (
+				        [Procesos],
+				        'dw fact_proceso'[Es Competitivo] = TRUE (),
+				        'dw fact_proceso'[proxy_desierto] = TRUE ()
+				    ),
+				    CALCULATE ( [Procesos], 'dw fact_proceso'[Es Competitivo] = TRUE () )
+				)
+			formatString: 0.0\ %;-0.0\ %;0.0\ %
+			lineageTag: 790c118a-d636-4dc4-afc5-d7d7c87d3669
+
+		measure 'Días a Adjudicar (mediana)' =
+				
+				MEDIAN ( 'dw fact_proceso'[dias_publicacion_adjudicacion] )
+			lineageTag: dc48fe14-ea65-48b6-a1d9-feb56607eb76
+
+			annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+		measure 'Procesos Embudo' =
+				
+				SWITCH (
+				    SELECTEDVALUE ( 'Etapas Embudo'[Etapa] ),
+				    "Competitivos", [Procesos Competitivos],
+				    "Con postores",
+				        CALCULATE ( [Procesos Competitivos], 'dw fact_proceso'[n_postores] > 0 ),
+				    "Adjudicados",
+				        CALCULATE ( [Procesos Competitivos], 'dw fact_proceso'[tiene_adjudicacion] = TRUE () )
+				)
+			formatString: 0
+			lineageTag: d95af3e0-a52e-4398-8913-4f3e9e50a97d
+
+		measure '% Un Solo Postor (mín. 100)' =
+				
+				IF ( [Procesos Competitivos] >= 100, [% Un Solo Postor] )
+			formatString: 0.0\ %;-0.0\ %;0.0\ %
+			lineageTag: 84c28657-3896-444b-9b2d-a5157c05084a
+
+		partition _Medidas = m
+			mode: import
+			source =
+					let
+					  Origen = Table.FromRows(Json.Document(Binary.Decompress(Binary.FromText("i44FAA==", BinaryEncoding.Base64), Compression.Deflate)), let _t = ((type nullable text) meta [Serialized.Text = true]) in type table [Medidas = _t]),
+					    #"Columnas quitadas" = Table.RemoveColumns(Origen,{"Medidas"})
+					in
+					  #"Columnas quitadas"
+
+		annotation PBI_ResultType = Table
+

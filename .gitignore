@@ -1,0 +1,18 @@
+# Datos y respaldos (no se suben: pesados y con licencia propia; ver README)
+*.csv
+*.bak
+*.mdf
+*.ldf
+*.ndf
+*.zip
+
+# Temporales de Office / Power BI / sistema
+~$*
+*.tmp
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Power BI: carpeta de cache local y archivos de recuperacion
+.pbi/
+*.pbix.bak

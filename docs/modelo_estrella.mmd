@@ -1,0 +1,81 @@
+erDiagram
+    dim_fecha ||--o{ fact_proceso : "fecha_publicacion_key (activa)"
+    dim_fecha ||--o{ fact_proceso : "fecha_adjudicacion_key (inactiva)"
+    dim_fecha ||--o{ fact_proceso : "fecha_firma_key (inactiva)"
+    dim_fecha ||--o{ fact_adjudicacion : "fecha_publicacion_key (activa)"
+    dim_fecha ||--o{ fact_adjudicacion : "fecha_key (inactiva)"
+    dim_entidad ||--o{ fact_proceso : entidad_id
+    dim_entidad ||--o{ fact_adjudicacion : entidad_id
+    dim_categoria ||--o{ fact_proceso : categoria_id
+    dim_categoria ||--o{ fact_adjudicacion : categoria_id
+    dim_procedimiento ||--o{ fact_proceso : procedimiento_id
+    dim_procedimiento ||--o{ fact_adjudicacion : procedimiento_id
+    dim_proveedor ||--o{ fact_adjudicacion : proveedor_id
+
+    dim_fecha {
+        int fecha_key PK
+        date fecha
+        smallint anio
+        tinyint trimestre
+        tinyint mes
+        nvarchar nombre_mes
+        char anio_mes
+        tinyint dia
+        tinyint dia_semana
+    }
+    dim_entidad {
+        int entidad_id PK
+        nvarchar codigo_consucode
+        nvarchar nombre
+        nvarchar departamento
+        nvarchar provincia
+        nvarchar distrito
+    }
+    dim_proveedor {
+        int proveedor_id PK
+        nvarchar ruc
+        nvarchar nombre
+        nvarchar tipo_contribuyente
+    }
+    dim_procedimiento {
+        int procedimiento_id PK
+        nvarchar detalle
+        nvarchar familia
+    }
+    dim_categoria {
+        int categoria_id PK
+        nvarchar nombre
+    }
+    fact_proceso {
+        int proceso_id PK
+        nvarchar ocid
+        int entidad_id FK
+        int categoria_id FK
+        int procedimiento_id FK
+        int fecha_publicacion_key FK
+        int fecha_adjudicacion_key FK
+        int fecha_firma_key FK
+        decimal monto_referencial_pen
+        decimal monto_adjudicado_pen
+        decimal monto_contratado_pen
+        int n_postores
+        int n_adjudicaciones
+        bit tiene_adjudicacion
+        bit un_solo_postor
+        bit en_curso
+        bit proxy_desierto
+        int dias_publicacion_adjudicacion
+        int dias_adjudicacion_firma
+    }
+    fact_adjudicacion {
+        int adjudicacion_id PK
+        int proceso_id
+        int entidad_id FK
+        int proveedor_id FK
+        int categoria_id FK
+        int procedimiento_id FK
+        int fecha_key FK
+        int fecha_publicacion_key FK
+        decimal monto_pen
+        bit pen_inferido
+    }
