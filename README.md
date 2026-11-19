@@ -2,11 +2,31 @@
 
 Análisis de la contratación pública peruana con datos abiertos del OECE (estándar OCDS): pipeline ETL en **SQL Server** (stg → core → dw en estrella) y dashboard de 5 páginas en **Power BI**.
 
-![Resumen](docs/img/01_resumen.png)
+![Resumen](imagenes/01-resumen.png)
+
+[Ver dashboard completo (PDF)](imagenes/dashboard-completo.pdf)
 
 ## Objetivo
 
 Construir de punta a punta un caso de BI con datos reales y desordenados: ingesta masiva, limpieza, modelado dimensional, validación de métricas, rendimiento (índices), respaldo/restauración y visualización.
+
+## Dashboard
+
+**Gasto**
+
+![Gasto](imagenes/02-gasto.png)
+
+**Proveedores**
+
+![Proveedores](imagenes/03-proveedores.png)
+
+**Competencia**
+
+![Competencia](imagenes/04-competencia.png)
+
+**Notas**
+
+![Notas](imagenes/05-notas.png)
 
 ## Fuente de datos
 
@@ -28,7 +48,7 @@ CSV OCDS (9 archivos/año) ──BULK INSERT──▶ stg (NVARCHAR(MAX))
 
 Modelo dimensional: ver [docs/modelo_datos.md](docs/modelo_datos.md).
 
-![Modelo estrella](docs/img/modelo_estrella.png)
+![Modelo estrella](imagenes/modelo_estrella.png)
 
 ## Estructura del repositorio
 
@@ -42,7 +62,8 @@ sql/            Scripts numerados (ejecutar en orden)
   06_respaldo_restauracion.sql    BACKUP / RESTORE
   exploracion/perfilado_calidad.sql
 powerbi/        Dashboard, tema, medidas DAX (ver powerbi/README.md)
-docs/           Metodología, hallazgos, diccionario, modelo, rendimiento, imágenes
+docs/           Metodología, hallazgos, diccionario, modelo, rendimiento
+imagenes/       Capturas del dashboard, modelo estrella y PDF
 ```
 
 ## Cómo reproducirlo
